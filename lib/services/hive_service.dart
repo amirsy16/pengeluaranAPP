@@ -8,6 +8,7 @@ class HiveService {
     await Hive.initFlutter();
     Hive.registerAdapter(TransactionTypeAdapter());
     Hive.registerAdapter(CategoryTypeAdapter());
+    Hive.registerAdapter(TransactionItemAdapter());
     Hive.registerAdapter(TransactionModelAdapter());
     await Hive.openBox<TransactionModel>(_boxName);
   }
@@ -36,5 +37,3 @@ class HiveService {
     await _box.clear();
   }
 }
-
-

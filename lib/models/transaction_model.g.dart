@@ -24,13 +24,14 @@ class TransactionModelAdapter extends TypeAdapter<TransactionModel> {
       category: fields[4] as CategoryType,
       date: fields[5] as DateTime,
       note: fields[6] as String?,
+      items: (fields[7] as List?)?.cast<TransactionItem>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, TransactionModel obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -44,8 +45,13 @@ class TransactionModelAdapter extends TypeAdapter<TransactionModel> {
       ..writeByte(5)
       ..write(obj.date)
       ..writeByte(6)
-      ..write(obj.note);
+      ..write(obj.note)
+      ..writeByte(7)
+      ..write(obj.items);
   }
+
+  @override
+  int get hashCode => typeId.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -53,9 +59,49 @@ class TransactionModelAdapter extends TypeAdapter<TransactionModel> {
       other is TransactionModelAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
+}
+
+class TransactionItemAdapter extends TypeAdapter<TransactionItem> {
+  @override
+  final int typeId = 3;
+
+  @override
+  TransactionItem read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return TransactionItem(
+      name: fields[0] as String,
+      amount: fields[1] as double,
+      quantity: fields[2] as int,
+      unitPrice: fields[3] as double,
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, TransactionItem obj) {
+    writer
+      ..writeByte(4)
+      ..writeByte(0)
+      ..write(obj.name)
+      ..writeByte(1)
+      ..write(obj.amount)
+      ..writeByte(2)
+      ..write(obj.quantity)
+      ..writeByte(3)
+      ..write(obj.unitPrice);
+  }
 
   @override
   int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is TransactionItemAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
 }
 
 class TransactionTypeAdapter extends TypeAdapter<TransactionType> {
@@ -70,7 +116,7 @@ class TransactionTypeAdapter extends TypeAdapter<TransactionType> {
       case 1:
         return TransactionType.expense;
       default:
-        return TransactionType.expense;
+        return TransactionType.income;
     }
   }
 
@@ -87,14 +133,14 @@ class TransactionTypeAdapter extends TypeAdapter<TransactionType> {
   }
 
   @override
+  int get hashCode => typeId.hashCode;
+
+  @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is TransactionTypeAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
-
-  @override
-  int get hashCode => typeId.hashCode;
 }
 
 class CategoryTypeAdapter extends TypeAdapter<CategoryType> {
@@ -123,7 +169,7 @@ class CategoryTypeAdapter extends TypeAdapter<CategoryType> {
       case 8:
         return CategoryType.others;
       default:
-        return CategoryType.others;
+        return CategoryType.food;
     }
   }
 
@@ -161,14 +207,12 @@ class CategoryTypeAdapter extends TypeAdapter<CategoryType> {
   }
 
   @override
+  int get hashCode => typeId.hashCode;
+
+  @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is CategoryTypeAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
-
-  @override
-  int get hashCode => typeId.hashCode;
 }
-
-

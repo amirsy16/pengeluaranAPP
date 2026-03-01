@@ -5,6 +5,7 @@ import '../widgets/balance_card.dart';
 import '../widgets/transaction_tile.dart';
 import '../widgets/empty_state.dart';
 import 'add_transaction_screen.dart';
+import '../widgets/transaction_detail_dialog.dart'; // Import this
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -173,6 +174,14 @@ class DashboardScreen extends StatelessWidget {
                       transaction: tx,
                       onDelete: () =>
                           context.read<TransactionProvider>().deleteTransaction(tx.id),
+                      onTap: () { // Add onTap
+                        showDialog(
+                          context: context,
+                          builder: (ctx) => TransactionDetailDialog(
+                            transaction: tx,
+                          ),
+                        );
+                      },
                     );
                   },
                   childCount: recent.length,
@@ -183,6 +192,7 @@ class DashboardScreen extends StatelessWidget {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'dashboard_fab',
         onPressed: () {
           Navigator.push(
             context,

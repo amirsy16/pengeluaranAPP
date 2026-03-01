@@ -127,6 +127,9 @@ class TransactionModel extends HiveObject {
   @HiveField(6)
   final String? note;
 
+  @HiveField(7)
+  final List<TransactionItem>? items;
+
   TransactionModel({
     required this.id,
     required this.title,
@@ -135,7 +138,28 @@ class TransactionModel extends HiveObject {
     required this.category,
     required this.date,
     this.note,
+    this.items,
   });
 }
 
+@HiveType(typeId: 3)
+class TransactionItem extends HiveObject {
+  @HiveField(0)
+  final String name;
 
+  @HiveField(1)
+  final double amount;
+
+  @HiveField(2)
+  final int quantity;
+
+  @HiveField(3)
+  final double unitPrice;
+
+  TransactionItem({
+    required this.name,
+    required this.amount,
+    this.quantity = 1,
+    this.unitPrice = 0,
+  });
+}

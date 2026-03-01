@@ -30,6 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
       floatingActionButton: _currentIndex == 0
           ? null
           : FloatingActionButton(
+              heroTag: 'home_fab',
               onPressed: () {
                 Navigator.push(
                   context,

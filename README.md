@@ -24,6 +24,7 @@
 - 🗑️ **Delete Transactions** — Remove individual entries with ease
 - 🔄 **Reset Data** — Clear all income & expense data with one tap
 - 💾 **Local Storage** — All data stored offline using Hive (no internet needed)
+- 🤖 **Smart Receipt Scan** — Auto-extract transaction details from receipts using Gemini AI
 - 🎨 **Material Design 3** — Clean, modern UI with smooth animations
 - 🖼️ **Custom Logo** — Personalized branding on the dashboard
 
@@ -46,6 +47,8 @@
 | [fl_chart](https://pub.dev/packages/fl_chart) | Charts & Graphs |
 | [intl](https://pub.dev/packages/intl) | Currency & Date Formatting |
 | [uuid](https://pub.dev/packages/uuid) | Unique Transaction IDs |
+| [google_generative_ai](https://pub.dev/packages/google_generative_ai) | AI processing with Gemini |
+| [flutter_dotenv](https://pub.dev/packages/flutter_dotenv) | Environment configuration |
 
 ---
 
@@ -66,7 +69,8 @@ lib/
 │   ├── charts_screen.dart       # Analytics & charts
 │   └── add_transaction_screen.dart # Add new transaction
 ├── services/
-│   └── hive_service.dart        # Hive DB initialization
+│   ├── hive_service.dart        # Hive DB initialization
+│   └── gemini_service.dart      # AI Receipt Scanning Service
 ├── theme/
 │   └── app_theme.dart           # App theme & colors
 └── widgets/
@@ -93,17 +97,29 @@ lib/
    cd expense_tracker
    ```
 
-2. **Install dependencies**
+2. **Set up Environment Variables**
+   
+   Create a `.env` file in the root directory and add your Gemini API Key:
+   ```bash
+   cp .env.example .env
+   ```
+   
+   Edit `.env`:
+   ```env
+   GEMINI_API_KEY=your_api_key_here
+   ```
+
+3. **Install dependencies**
    ```bash
    flutter pub get
    ```
 
-3. **Generate Hive adapters** _(if needed)_
+4. **Generate Hive adapters** _(if needed)_
    ```bash
    dart run build_runner build --delete-conflicting-outputs
    ```
 
-4. **Run the app**
+5. **Run the app**
    ```bash
    flutter run
    ```
@@ -131,6 +147,9 @@ dependencies:
   fl_chart: ^0.69.0     # Charts
   intl: ^0.19.0         # Formatting
   uuid: ^4.5.1          # ID generation
+  google_generative_ai: # Gemini AI SDK
+  flutter_dotenv:       # Env variables
+  image_picker:         # Camera & Gallery access
 ```
 
 ---

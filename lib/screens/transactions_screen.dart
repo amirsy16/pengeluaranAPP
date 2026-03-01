@@ -4,6 +4,7 @@ import '../models/transaction_model.dart';
 import '../providers/transaction_provider.dart';
 import '../widgets/transaction_tile.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/transaction_detail_dialog.dart'; // import this
 
 class TransactionsScreen extends StatefulWidget {
   const TransactionsScreen({super.key});
@@ -119,6 +120,14 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                             ),
                           );
                         },
+                        onTap: () { // add this
+                          showDialog(
+                            context: context,
+                            builder: (ctx) => TransactionDetailDialog(
+                              transaction: tx,
+                            ),
+                          );
+                        },
                       );
                     },
                   ),
@@ -184,5 +193,3 @@ class _FilterChip extends StatelessWidget {
     );
   }
 }
-
-
