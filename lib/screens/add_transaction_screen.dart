@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -512,44 +513,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         ),
 
         // Full-screen loading overlay while scanning
-        if (_isScanning)
-          Container(
-            color: Colors.black.withValues(alpha: 0.5),
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 32, vertical: 28),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const CircularProgressIndicator(),
-                    const SizedBox(height: 20),
-                    Text(
-                      'Memindai Struk...',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w700),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'AI sedang membaca data struk Anda',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurface
-                                .withValues(alpha: 0.6),
-                          ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
+        if (_isScanning) const _AIScanningOverlay(),
       ],
     );
   }
@@ -604,3 +568,394 @@ class _TypeButton extends StatelessWidget {
     );
   }
 }
+
+// ─────────────────────────────────────────────
+//  Animated AI Scanning Overlay
+// ─────────────────────────────────────────────
+class _AIScanningOverlay extends StatefulWidget {
+  const _AIScanningOverlay();
+
+  @override
+  State<_AIScanningOverlay> createState() => _AIScanningOverlayState();
+}
+
+class _AIScanningOverlayState extends State<_AIScanningOverlay>
+    with TickerProviderStateMixin {
+  late final AnimationController _scanLineCtrl;
+  late final AnimationController _pulseCtrl;
+  late final AnimationController _dotCtrl;
+  late final AnimationController _fadeCtrl;
+  late final AnimationController _rotateCtrl;
+  late final Animation<double> _scanLine;
+  late final Animation<double> _pulse;
+  late final Animation<double> _fade;
+
+  final List<String> _messages = [
+    'Menganalisis gambar struk...',
+    'AI sedang membaca teks...',
+    'Mengekstrak data merchant...',
+    'Menghitung total belanja...',
+    'Mengidentifikasi kategori...',
+    'Hampir selesai...',
+  ];
+  int _msgIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Scanning line goes top → bottom → top
+    _scanLineCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    )..repeat(reverse: true);
+    _scanLine = CurvedAnimation(parent: _scanLineCtrl, curve: Curves.easeInOut);
+
+    // Pulse the receipt icon
+    _pulseCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+    _pulse = Tween<double>(begin: 1.0, end: 1.15).animate(
+      CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
+    );
+
+    // Rotating ring
+    _rotateCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..repeat();
+
+    // Dot loading
+    _dotCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+
+    // Fade in
+    _fadeCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+    )..forward();
+    _fade = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut);
+
+    // Cycle through messages
+    _cycleMessages();
+  }
+
+  Future<void> _cycleMessages() async {
+    while (mounted) {
+      await Future.delayed(const Duration(milliseconds: 1600));
+      if (!mounted) break;
+      setState(() => _msgIndex = (_msgIndex + 1) % _messages.length);
+    }
+  }
+
+  @override
+  void dispose() {
+    _scanLineCtrl.dispose();
+    _pulseCtrl.dispose();
+    _rotateCtrl.dispose();
+    _dotCtrl.dispose();
+    _fadeCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    final surface = Theme.of(context).colorScheme.surface;
+
+    return FadeTransition(
+      opacity: _fade,
+      child: Container(
+        color: Colors.black.withValues(alpha: 0.65),
+        child: Center(
+          child: Container(
+            width: 300,
+            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
+            decoration: BoxDecoration(
+              color: surface,
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: [
+                BoxShadow(
+                  color: primary.withValues(alpha: 0.25),
+                  blurRadius: 40,
+                  spreadRadius: 4,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // ── Animated receipt scanner graphic ──
+                SizedBox(
+                  width: 110,
+                  height: 110,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Outer rotating dashed ring
+                      AnimatedBuilder(
+                        animation: _rotateCtrl,
+                        builder: (_, __) => Transform.rotate(
+                          angle: _rotateCtrl.value * 2 * math.pi,
+                          child: CustomPaint(
+                            size: const Size(110, 110),
+                            painter: _DashedRingPainter(color: primary),
+                          ),
+                        ),
+                      ),
+                      // Receipt card + scan line
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: SizedBox(
+                          width: 64,
+                          height: 80,
+                          child: Stack(
+                            children: [
+                              // Receipt background
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: primary.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: primary.withValues(alpha: 0.4),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: List.generate(
+                                    5,
+                                    (i) => Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 3),
+                                      child: Container(
+                                        height: 4,
+                                        decoration: BoxDecoration(
+                                          color: primary.withValues(
+                                              alpha: i == 4 ? 0.5 : 0.2),
+                                          borderRadius:
+                                              BorderRadius.circular(2),
+                                        ),
+                                        width: i == 4 ? 28 : double.infinity,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              // Scan line
+                              AnimatedBuilder(
+                                animation: _scanLine,
+                                builder: (_, __) => Positioned(
+                                  top: _scanLine.value * 72,
+                                  left: 0,
+                                  right: 0,
+                                  child: Container(
+                                    height: 2.5,
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          Colors.transparent,
+                                          primary,
+                                          primary,
+                                          Colors.transparent,
+                                        ],
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color:
+                                              primary.withValues(alpha: 0.8),
+                                          blurRadius: 6,
+                                          spreadRadius: 1,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      // Pulse ring
+                      ScaleTransition(
+                        scale: _pulse,
+                        child: Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: primary.withValues(alpha: 0.25),
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // ── AI Badge ──
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 5),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        primary,
+                        primary.withValues(alpha: 0.7),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.auto_awesome_rounded,
+                          color: Colors.white, size: 14),
+                      SizedBox(width: 5),
+                      Text(
+                        'SmartReceipt AI',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // ── Cycling status message ──
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 400),
+                  transitionBuilder: (child, anim) => FadeTransition(
+                    opacity: anim,
+                    child: SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(0, 0.3),
+                        end: Offset.zero,
+                      ).animate(anim),
+                      child: child,
+                    ),
+                  ),
+                  child: Text(
+                    _messages[_msgIndex],
+                    key: ValueKey(_msgIndex),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 6),
+
+                Text(
+                  'Mohon tunggu sebentar',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.5),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // ── Animated dots ──
+                _AnimatedDots(controller: _dotCtrl, color: primary),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Animated 3-dot loader ──
+class _AnimatedDots extends StatelessWidget {
+  final AnimationController controller;
+  final Color color;
+
+  const _AnimatedDots({required this.controller, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (_, __) {
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(3, (i) {
+            final delay = i / 3;
+            final value = ((controller.value - delay) % 1.0 + 1.0) % 1.0;
+            final scale = 0.5 + 0.5 * math.sin(value * math.pi);
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Transform.scale(
+                scale: scale,
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.4 + 0.6 * scale),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            );
+          }),
+        );
+      },
+    );
+  }
+}
+
+// ── Dashed ring painter ──
+class _DashedRingPainter extends CustomPainter {
+  final Color color;
+  _DashedRingPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color.withValues(alpha: 0.5)
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2 - 2;
+    const dashCount = 16;
+    const dashAngle = 2 * math.pi / dashCount;
+    const gapFraction = 0.4;
+
+    for (int i = 0; i < dashCount; i++) {
+      final startAngle = i * dashAngle;
+      final sweepAngle = dashAngle * (1 - gapFraction);
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        startAngle,
+        sweepAngle,
+        false,
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedRingPainter old) => old.color != color;
+}
+
