@@ -93,7 +93,7 @@ lib/
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/expense_tracker.git
+   git clone https://github.com/amirsy16/pengeluaranAPP.git
    cd expense_tracker
    ```
 
