@@ -76,7 +76,7 @@ class DashboardScreen extends StatelessWidget {
                       ),
                 ),
                 Text(
-                  'Expense Tracker',
+                  'Wolftrack',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),

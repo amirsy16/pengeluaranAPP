@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="public/mylogo.png" alt="Expense Tracker Logo" width="100" height="100" style="border-radius: 20px;" />
+<img src="public/mylogo.png" alt="Wolftrack Logo" width="100" height="100" style="border-radius: 20px;" />
 
 # 💸 Expense Tracker
 
